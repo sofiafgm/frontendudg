@@ -43,27 +43,27 @@
         <label id="label-size">Elige la talla</label>
 
         <div>
-          <input type="checkbox" name="size" value="xch" class="element" />
+          <input type="checkbox" name="size" value="xch" />
           <label for="xch">XCH</label>
         </div>
 
         <div>
-          <input type="checkbox" name="size" value="ch" class="element" />
+          <input type="checkbox" name="size" value="ch" />
           <label for="ch">CH</label>
         </div>
 
         <div>
-          <input type="checkbox" name="size" value="m" class="element" />
+          <input type="checkbox" name="size" value="m" />
           <label for="m">M</label>
         </div>
 
         <div>
-          <input type="checkbox" name="size" value="g" class="element" />
+          <input type="checkbox" name="size" value="g" />
           <label for="g">G</label>
         </div>
 
         <div>
-          <input type="checkbox" name="size" value="xg" class="element" />
+          <input type="checkbox" name="size" value="xg" />
           <label for="xg">XG</label>
         </div>
         <br />
@@ -95,37 +95,61 @@
       </div>
     </form>
 
+    <div class="card" style="width: 18rem;">
+    <ul class="list-group list-group-flush">
+    </ul>
+</div>
+
     <script type="text/javascript">
       const inputs = document.getElementsByClassName("element");
       const sizes = document.getElementsByName("size");
-      const chooseSize = document.getElementById("label-size")
+      const chooseSize = document.getElementById("label-size");
       const button = document.getElementById("button");
+      const listElements = document.querySelector('.list-group')
 
       button.addEventListener("click", validation);
 
       function validation() {
-        console.log(inputs);
+        let inputValues = []
         for (let i = 0; i < inputs.length; i++) {
           if (inputs[i].value != "") {
             inputs[i].style.border = "3px solid green";
+
+            inputValues.push(inputs[i].value);
+
           } else {
             inputs[i].style.border = "3px solid red";
           }
         }
 
-        var checked = 0
+        let checked = 0;
+        let sizeCheckedlist = [];
         for (let i = 0; i < sizes.length; i++) {
           if (sizes[i].checked) {
             checked++;
+            sizeCheckedlist.push(sizes[i].value);
           }
-          if (checked > 0) {
+          if (checked) {
             chooseSize.style.border = "3px solid green";
           } else {
             chooseSize.style.border = "3px solid red";
           }
         }
+
+        createCard(inputValues, sizeCheckedlist.join(' ,'))
       }
 
+      function createCard(values, sizes) {
+        let listItem = document.createElement("li");
+        let text = document.createTextNode(values);
+        let span = document.createElement("span");
+        let p = document.createElement("p");
+
+        listItem.className = "list-group-item"
+        listItem.append(text);
+        listItem.append(sizes);
+        listElements.append(listItem);
+      }
     </script>
   </body>
 </html>
