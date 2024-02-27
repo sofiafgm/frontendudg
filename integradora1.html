@@ -89,34 +89,40 @@
         />
         <br />
 
-        <button type="button" name="send" id="button" class="btn btn-secondary">
+        <button type="button" id="send" class="btn btn-secondary">
           Enviar
+        </button>
+
+        <button type="button" id="delete" class="btn btn-secondary">
+          Borrar Todo
         </button>
       </div>
     </form>
 
-    <div class="card" style="width: 18rem;">
-    <ul class="list-group list-group-flush">
-    </ul>
-</div>
+    <div class="card" style="width: 18rem">
+      <ul class="list-group list-group-flush" id="list-inputs"></ul>
+    </div>
 
     <script type="text/javascript">
       const inputs = document.getElementsByClassName("element");
       const sizes = document.getElementsByName("size");
       const chooseSize = document.getElementById("label-size");
-      const button = document.getElementById("button");
-      const listElements = document.querySelector('.list-group')
+      const send = document.getElementById("send");
+      const deleteButton = document.getElementById("delete");
+      const listElements = document.querySelector(".list-group");
+      const ulInputs = document.getElementById("list-inputs");
 
-      button.addEventListener("click", validation);
+      send.addEventListener("click", validation);
+      deleteButton.addEventListener("click", deleteList);
+      document.addEventListener("click", deleteElement);
 
       function validation() {
-        let inputValues = []
+        let inputValues = [];
         for (let i = 0; i < inputs.length; i++) {
           if (inputs[i].value != "") {
             inputs[i].style.border = "3px solid green";
 
             inputValues.push(inputs[i].value);
-
           } else {
             inputs[i].style.border = "3px solid red";
           }
@@ -136,17 +142,37 @@
           }
         }
 
-        createCard(inputValues, sizeCheckedlist.join(' ,'))
+        createCard(inputValues, sizeCheckedlist.join(" ,"));
       }
 
       function createCard(values, sizes) {
-        let listItem = document.createElement("li");
-        let text = document.createTextNode(values);
+        let liList = document.createElement("li");
+        let lisItemTemplate = `
+            <div class="aslgoasdsadsad">
+              ${values + "," + sizes}
+            </div>
+            <button class="btn btn-secondary delete-item">Borrar</button>
+          `;
 
-        listItem.className = "list-group-item"
-        listItem.append(text);
-        listItem.append(sizes);
-        listElements.append(listItem);
+        liList.className = "list-group-item";
+        liList.innerHTML = lisItemTemplate;
+        listElements.appendChild(liList);
+      }
+      function deleteList() {
+        while (ulInputs.hasChildNodes()) {
+          ulInputs.removeChild(ulInputs.firstChild);
+        }
+      }
+
+      function deleteElement(e){
+        
+        if(e.target.classList.contains("delete-item")) {
+          let parent = e.target.parentElement;
+
+          parent.remove();
+
+
+        }
       }
     </script>
   </body>
