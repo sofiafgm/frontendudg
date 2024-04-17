@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="jquery-ui-1.13.2.custom/jquery-ui.min.css" />
+    <script src="jquery-ui-1.13.2.custom/external/jquery/jquery.js"></script>
+    <!-- jQuery -->
+    <script src="jquery-ui-1.13.2.custom/jquery-ui.min.js"></script>
+    <!-- jQuery UI -->
+    <script src="parseXMLToJson.js"></script>
+    <!-- Función para parsear XML a JSON -->
+
+    <title>Manipulacion del DOM y eventos</title>
+  </head>
+
+  <body>
+    <div>
+      <!-- Div para el select de registros por página -->
+      <label for="selectmenu">Registros por página</label>
+      <select id="selectmenu">
+        <option selected>20</option>
+        <option>50</option>
+        <option>100</option>
+      </select>
+    </div>
+
+    <div>
+      <!-- Div para la barra de búsqueda -->
+      <label for="search">Buscar:</label>
+      <input type="text" id="search" />
+      <button id="searchButton">Buscar</button>
+    </div>
+
+    <div>
+      <table id="table">
+        <!-- Tabla para mostrar los datos -->
+        <thead>
+          <tr class="sort-buttons">
+            <th><button data-sort="id" id="idButton">Id</button></th>
+            <th>
+              <button data-sort="first_name" id="nameButton">Nombre</button>
+            </th>
+            <th>
+              <button data-sort="last_name" id="lastNameButton">
+                Apellido
+              </button>
+            </th>
+            <th><button data-sort="email" id="emailButton">email</button></th>
+            <th>
+              <button data-sort="gender" id="genderButton">Género</button>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableContent"></tbody>
+        <!-- Cuerpo de la tabla -->
+      </table>
+    </div>
+
+    <div>
+      <button id="previous">
+        <!-- Botón para ir a la página anterior -->
+        <span class="ui-icon ui-icon-triangle-1-w"></span>
+      </button>
+      <div id="paginationButtons"></div>
+      <!-- Div para los botones de paginación -->
+      <button id="next">
+        <!-- Botón para ir a la página siguiente -->
+        <span class="ui-icon ui-icon-triangle-1-e"></span>
+      </button>
+    </div>
+
+    <script>
+      $(document).ready(getData); // Llamada a la función getData al cargar la página
+
+      let items = [];
+      let currentPage = 1;
+
+      function getData() {
+        // Función para obtener los datos del servidor
+        $.ajax({
+          type: "GET",
+          url: "https://mpd45fb029ebeeb41f85.free.beeceptor.com/data",
+          dataType: "xml",
+
+          error: function () {
+            console.log("nop");
+          },
+
+          success: function (response) {
+            data = xmlToJson(response); // Llamada a la función xmlToJson
+            RenderData(data);
+            generatePagination(20);
+          },
+        });
+      }
+
+      function RenderData(data) {
+        // Función para renderizar los datos en la tabla
+        items = data?.dataset?.record;
+        $("#tableContent").empty();
+        items.forEach((item) => {
+          const id = item.id["#text"];
+          const name = item.first_name["#text"];
+          const lastName = item.last_name["#text"];
+          const email = item.email["#text"];
+          const gender = item.gender["#text"];
+
+          $("#tableContent").append(
+            "<tr><td>" +
+              id +
+              "</td><td>" +
+              name +
+              "</td><td>" +
+              lastName +
+              "</td><td>" +
+              email +
+              "</td><td>" +
+              gender +
+              "</td></tr>"
+          );
+        });
+      }
+
+      $(".sort-buttons button") // Función para ordenar los datos de la tabla
+        .button()
+        .click(function () {
+          const sortKey = $(this).data("sort");
+          items.sort((a, b) => {
+            if (sortKey === "id") {
+              return a[sortKey]["#text"] - b[sortKey]["#text"];
+            }
+            if (a[sortKey]["#text"] < b[sortKey]["#text"]) {
+              return -1;
+            }
+            if (a[sortKey]["#text"] > b[sortKey]["#text"]) {
+              return 1;
+            }
+            return 0;
+          });
+          this.asc = !this.asc;
+          if (!this.asc) {
+            items = items.reverse();
+          }
+          RenderData({ dataset: { record: items } });
+        });
+
+      $("#searchButton") // Función para buscar los datos en la tabla
+        .button()
+        .click(function () {
+          const searchValue = $("#search").val().toLowerCase();
+          const filteredItems = items.filter(
+            (item) =>
+              item.first_name["#text"].toLowerCase().includes(searchValue) ||
+              item.last_name["#text"].toLowerCase().includes(searchValue) ||
+              item.email["#text"].toLowerCase().includes(searchValue) ||
+              item.gender["#text"].toLowerCase().includes(searchValue)
+          );
+          if (filteredItems.length === 0) {
+            alert("No se encontraron resultados");
+          } else {
+            RenderData({ dataset: { record: filteredItems } });
+            items = data?.dataset?.record;
+            if (searchValue === "") {
+              RenderData(data);
+            }
+          }
+        });
+
+      $("#selectmenu")
+        .selectmenu()
+        .on("selectmenuchange", function (event, ui) {
+          // Función para seleccionar el número de registros por página
+          const value = ui.item.value;
+          generatePagination(value);
+        });
+
+      function generatePagination(itemsPerPage) {
+        // Función para generar la paginación
+        const pages = Math.ceil(100 / itemsPerPage);
+        $("#paginationButtons").empty();
+        for (let i = 1; i <= pages; i++) {
+          $("#paginationButtons").append(
+            `<button role="link" type="button">${i}</button>`
+          );
+          paginate(itemsPerPage);
+        }
+      }
+
+      function paginate(itemsPerPage) {
+        // Función para paginar los datos
+        const itemsOnPage = data.dataset.record.slice(0, itemsPerPage);
+        RenderData({ dataset: { record: itemsOnPage } });
+      }
+
+      function setPage(currentPage) {
+        // Función para establecer la página actual
+        const selectmenuValue = $("#selectmenu").val();
+        const itemsPerPage = Number(selectmenuValue);
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const itemsOnPage = data.dataset.record.slice(start, end);
+        RenderData({ dataset: { record: itemsOnPage } });
+      }
+
+      $("#previous") // Función para ir a la página anterior
+        .button({
+          icon: "ui-icon-triangle-1-w",
+          showLabel: false,
+        })
+        .click(function () {
+          if (currentPage > 1) {
+            currentPage = currentPage - 1;
+          } else {
+            currentPage = 1;
+          }
+
+          setPage(currentPage);
+        });
+
+      $("#paginationButtons").on("click", "button", function () {
+        // Función para ir a una página específica
+        const pageText = $(this).text();
+        currentPage = Number(pageText);
+
+        setPage(currentPage);
+      });
+
+      $("#next") // Función para ir a la página siguiente
+        .button({
+          icon: "ui-icon-triangle-1-e",
+          showLabel: false,
+        })
+        .click(function () {
+          const selectmenuValue = $("#selectmenu").val();
+          const itemsPerPage = Number(selectmenuValue);
+          const pages = Math.ceil(100 / itemsPerPage);
+
+          if (currentPage < pages) {
+            currentPage = currentPage + 1;
+          } else {
+            currentPage = pages;
+          }
+
+          setPage(currentPage);
+        });
+    </script>
+  </body>
+</html>
